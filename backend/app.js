@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import connectDB from './config/db.js';
 import { mockDB } from './config/mockDB.js';
 import authRoutes from './routes/auth.js';
 import roomRoutes from './routes/rooms.js';
@@ -25,9 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
-    methods: ['GET', 'POST']
-  }
+    origin: ['http://localhost:3000', 'http://localhost:3001', '*'],
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  transports: ['websocket', 'polling']
 });
 
 const PORT = process.env.PORT || 4000;
@@ -49,7 +52,7 @@ app.get('/', (req, res) => {
 const userSockets = new Map(); // Map userId -> socketId
 
 io.on('connection', (socket) => {
-  console.log(`New connection: ${socket.id}`);
+  console.log(`[Socket] New connection: ${socket.id}`);
 
   // User join
   socket.on('user:join', async (userId) => {

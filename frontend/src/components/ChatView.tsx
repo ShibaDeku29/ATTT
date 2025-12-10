@@ -19,7 +19,6 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   const [socketConnected, setSocketConnected] = useState(false);
   const [reactions, setReactions] = useState<{ [key: string]: { [key: string]: number } }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketInitialized = useRef(false);
   const socketRef = useRef<Socket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,32 +33,28 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   }, [messages]);
 
   useEffect(() => {
-    if (!user || !roomId) {
-      return;
-    }
+    if (!user || !roomId) return;
 
-    if (socketInitialized.current) return;
-    socketInitialized.current = true;
+    setLoading(true);
+    fetchRoomAndMessages(roomId);
 
-    fetchRoomAndMessages();
-    initializeSocket();
+    const currentSocket = initializeSocket(roomId);
+
+    return () => {
+      if (currentSocket) {
+        currentSocket.emit('room:leave', roomId);
+        currentSocket.disconnect();
+      }
+      socketRef.current = null;
+      setSocketConnected(false);
+    };
   }, [roomId, user?.id]);
 
-  // Cleanup socket on unmount
-  useEffect(() => {
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.emit('room:leave', roomId);
-        socketRef.current.disconnect();
-      }
-    };
-  }, [roomId]);
-
-  const fetchRoomAndMessages = async () => {
+  const fetchRoomAndMessages = async (id: string) => {
     try {
       const [roomRes, messagesRes] = await Promise.all([
-        roomService.getRoomById(roomId),
-        messageService.getMessages(roomId, 50),
+        roomService.getRoomById(id),
+        messageService.getMessages(id, 50),
       ]);
       setRoom(roomRes.data);
       setMessages(messagesRes.data.messages || []);
@@ -70,8 +65,11 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     }
   };
 
-  const initializeSocket = () => {
-    const newSocket = io('http://localhost:4000', {
+  const initializeSocket = (currentRoomId: string) => {
+    const socketUrl = (import.meta as any).env.VITE_SOCKET_URL || 'http://localhost:4000';
+    console.log('[Socket] Connecting to:', socketUrl);
+    
+    const newSocket = io(socketUrl, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -79,14 +77,19 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     });
 
     newSocket.on('connect', () => {
-      console.log('Socket connected:', newSocket.id);
+      console.log('[Socket] Connected:', newSocket.id);
       setSocketConnected(true);
       newSocket.emit('user:join', user?.id);
-      newSocket.emit('room:join', roomId);
+      newSocket.emit('room:join', currentRoomId);
     });
 
-    newSocket.on('disconnect', () => {
-      console.log('Socket disconnected');
+    newSocket.on('disconnect', (reason) => {
+      console.log('[Socket] Disconnected', reason);
+      setSocketConnected(false);
+    });
+
+    newSocket.on('connect_error', (error: any) => {
+      console.error('[Socket] Connection error:', error);
       setSocketConnected(false);
     });
 
@@ -105,6 +108,7 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     });
 
     socketRef.current = newSocket;
+    return newSocket;
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {

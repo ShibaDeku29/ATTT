@@ -44,12 +44,15 @@ const createCollections = async () => {
       console.log('✓ Created messages collection');
     }
     
-    // Create indexes
-    await User.collection.createIndex({ email: 1 }, { unique: true });
-    await Room.collection.createIndex({ createdAt: -1 });
-    await Message.collection.createIndex({ room: 1, createdAt: -1 });
-    
-    console.log('✓ Indexes created successfully');
+    // Create indexes with error handling
+    try {
+      await db.collection('users').createIndex({ email: 1 }, { unique: true });
+      await db.collection('rooms').createIndex({ createdAt: -1 });
+      await db.collection('messages').createIndex({ room: 1, createdAt: -1 });
+      console.log('✓ Indexes created successfully');
+    } catch (indexError) {
+      console.log('ℹ Indexes already exist or could not be created:', indexError.message);
+    }
   } catch (error) {
     console.error('Error creating collections:', error.message);
   }
