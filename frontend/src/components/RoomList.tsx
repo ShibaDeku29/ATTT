@@ -1,19 +1,17 @@
 import { Room } from '../types';
-import { useNavigate } from 'react-router-dom';
 
 interface RoomListProps {
   rooms: Room[];
+  onSelectRoom: (roomId: string) => void;
 }
 
-export default function RoomList({ rooms }: RoomListProps) {
-  const navigate = useNavigate();
-
+export default function RoomList({ rooms, onSelectRoom }: RoomListProps) {
   return (
     <div className="space-y-2">
       {rooms.map((room) => (
         <button
           key={room._id}
-          onClick={() => navigate(`/chat/${room._id}`)}
+          onClick={() => onSelectRoom(room._id)}
           className="w-full text-left p-3 hover:bg-dark-bg/50 rounded-xl transition group relative overflow-hidden"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/5 opacity-0 group-hover:opacity-100 transition"></div>
