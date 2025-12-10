@@ -2,9 +2,9 @@
 set -e
 
 echo "Installing dependencies..."
-npm ci
-npm ci --prefix backend
-npm ci --prefix frontend
+npm ci --include=dev
+npm ci --prefix backend --include=dev
+npm ci --prefix frontend --include=dev
 
 echo "Building application..."
 npm run build
