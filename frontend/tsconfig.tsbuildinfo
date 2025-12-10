@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/createroommodal.tsx","./src/components/protectedroute.tsx","./src/components/roomlist.tsx","./src/context/authcontext.tsx","./src/pages/chatroom.tsx","./src/pages/dashboard.tsx","./src/pages/login.tsx","./src/pages/register.tsx","./src/services/api.ts","./src/types/index.ts"],"version":"5.9.3"}
