@@ -6,7 +6,6 @@ import { Room } from '../types';
 import RoomList from '../components/RoomList';
 import CreateRoomModal from '../components/CreateRoomModal';
 import { ThemeSelector } from '../components/ThemeSelector';
-import { ChatView } from '../components/ChatView';
 
 export const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -14,7 +13,6 @@ export const Dashboard = () => {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -86,7 +84,7 @@ export const Dashboard = () => {
                 <p>Chưa có phòng chat</p>
               </div>
             ) : (
-              <RoomList rooms={rooms} onSelectRoom={setSelectedRoomId} />
+              <RoomList rooms={rooms} />
             )}
           </div>
         </div>
@@ -120,57 +118,51 @@ export const Dashboard = () => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col bg-gradient-to-br from-dark-bg/50 via-dark-bg to-dark-bg-darker">
-        {selectedRoomId ? (
-          <ChatView roomId={selectedRoomId} onClose={() => setSelectedRoomId(null)} />
-        ) : (
-          <>
-            {/* Header */}
-            <header className="bg-dark-card/40 border-b border-border/10 backdrop-blur-xl px-6 py-6 sticky top-0 z-10">
-              <div className="max-w-4xl">
-                <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent mb-2">
-                  Chào mừng! 👋
-                </h2>
-                <p className="text-text-secondary">Chọn một phòng hoặc tạo phòng mới để bắt đầu trò chuyện</p>
+        {/* Header */}
+        <header className="bg-dark-card/40 border-b border-border/10 backdrop-blur-xl px-6 py-6 sticky top-0 z-10">
+          <div className="max-w-4xl">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent mb-2">
+              Chào mừng! 👋
+            </h2>
+            <p className="text-text-secondary">Chọn một phòng hoặc tạo phòng mới để bắt đầu trò chuyện</p>
+          </div>
+        </header>
+
+        {/* Welcome Section */}
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="text-center max-w-md">
+            {/* Animated Illustration */}
+            <div className="mb-8 relative">
+              <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/10">
+                <div className="text-7xl animate-bounce">💬</div>
               </div>
-            </header>
-
-            {/* Welcome Section */}
-            <div className="flex-1 flex items-center justify-center p-6">
-              <div className="text-center max-w-md">
-                {/* Animated Illustration */}
-                <div className="mb-8 relative">
-                  <div className="w-32 h-32 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/10">
-                    <div className="text-7xl animate-bounce">💬</div>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-secondary/0 rounded-3xl animate-pulse"></div>
-                </div>
-
-                <h3 className="text-3xl font-bold text-text-primary mb-3">
-                  Bắt Đầu Cuộc Trò Chuyện
-                </h3>
-                <p className="text-text-secondary text-lg mb-8">
-                  Kết nối với bạn bè của bạn trong thời gian thực. Chọn một phòng từ thanh bên hoặc tạo một phòng mới.
-                </p>
-
-                {/* Quick Action Buttons */}
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setShowCreateModal(true)}
-                    className="w-full px-6 py-4 bg-gradient-to-r from-primary to-secondary hover:shadow-xl hover:shadow-primary/40 text-white font-bold rounded-2xl transition transform hover:scale-105"
-                  >
-                    Tạo Phòng Mới
-                  </button>
-                  <button
-                    onClick={() => navigate('/dashboard')}
-                    className="w-full px-6 py-4 bg-dark-card hover:bg-dark-card/80 text-text-primary font-bold rounded-2xl transition border border-border/30"
-                  >
-                    Duyệt Phòng
-                  </button>
-                </div>
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-secondary/0 rounded-3xl animate-pulse"></div>
             </div>
-          </>
-        )}
+
+            <h3 className="text-3xl font-bold text-text-primary mb-3">
+              Bắt Đầu Cuộc Trò Chuyện
+            </h3>
+            <p className="text-text-secondary text-lg mb-8">
+              Kết nối với bạn bè của bạn trong thời gian thực. Chọn một phòng từ thanh bên hoặc tạo một phòng mới.
+            </p>
+
+            {/* Quick Action Buttons */}
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="w-full px-6 py-4 bg-gradient-to-r from-primary to-secondary hover:shadow-xl hover:shadow-primary/40 text-white font-bold rounded-2xl transition transform hover:scale-105"
+              >
+                Tạo Phòng Mới
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="w-full px-6 py-4 bg-dark-card hover:bg-dark-card/80 text-text-primary font-bold rounded-2xl transition border border-border/30"
+              >
+                Duyệt Phòng
+              </button>
+            </div>
+          </div>
+        </div>
       </main>
 
       {showCreateModal && (

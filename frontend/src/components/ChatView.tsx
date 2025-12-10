@@ -115,7 +115,7 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     e.preventDefault();
     if (!messageText.trim()) return;
 
-    if (!socketRef.current || !socketRef.current.connected) {
+    if (!socketRef.current || !socketConnected) {
       console.warn('Socket not connected, queueing message');
       // Wait a bit for socket to reconnect
       await new Promise(r => setTimeout(r, 500));
