@@ -1,4 +1,7 @@
 import mongoose from 'mongoose';
+import User from '../models/User.js';
+import Room from '../models/Room.js';
+import Message from '../models/Message.js';
 
 const connectDB = async () => {
   try {
@@ -7,10 +10,48 @@ const connectDB = async () => {
       useUnifiedTopology: true,
     });
     console.log(`MongoDB connected: ${conn.connection.host}`);
+    
+    // Create collections and indexes
+    await createCollections();
+    
     return conn;
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);
     process.exit(1);
+  }
+};
+
+const createCollections = async () => {
+  try {
+    const db = mongoose.connection.db;
+    
+    // Create collections if they don't exist
+    const collections = await db.listCollections().toArray();
+    const collectionNames = collections.map(c => c.name);
+    
+    if (!collectionNames.includes('users')) {
+      await db.createCollection('users');
+      console.log('✓ Created users collection');
+    }
+    
+    if (!collectionNames.includes('rooms')) {
+      await db.createCollection('rooms');
+      console.log('✓ Created rooms collection');
+    }
+    
+    if (!collectionNames.includes('messages')) {
+      await db.createCollection('messages');
+      console.log('✓ Created messages collection');
+    }
+    
+    // Create indexes
+    await User.collection.createIndex({ email: 1 }, { unique: true });
+    await Room.collection.createIndex({ createdAt: -1 });
+    await Message.collection.createIndex({ room: 1, createdAt: -1 });
+    
+    console.log('✓ Indexes created successfully');
+  } catch (error) {
+    console.error('Error creating collections:', error.message);
   }
 };
 

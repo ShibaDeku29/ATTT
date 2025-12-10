@@ -16,6 +16,7 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(true);
   const [isRecording, setIsRecording] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
   const [reactions, setReactions] = useState<{ [key: string]: { [key: string]: number } }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketInitialized = useRef(false);
@@ -79,12 +80,14 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
 
     newSocket.on('connect', () => {
       console.log('Socket connected:', newSocket.id);
+      setSocketConnected(true);
       newSocket.emit('user:join', user?.id);
       newSocket.emit('room:join', roomId);
     });
 
     newSocket.on('disconnect', () => {
       console.log('Socket disconnected');
+      setSocketConnected(false);
     });
 
     newSocket.on('message:receive', (message: Message) => {
@@ -109,7 +112,16 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     if (!messageText.trim()) return;
 
     if (!socketRef.current || !socketRef.current.connected) {
-      alert('Kết nối mất. Vui lòng thử lại');
+      console.warn('Socket not connected, queueing message');
+      // Wait a bit for socket to reconnect
+      await new Promise(r => setTimeout(r, 500));
+      
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('message:send', { roomId, text: messageText });
+        setMessageText('');
+      } else {
+        alert('Không kết nối được. Vui lòng làm mới trang');
+      }
       return;
     }
 

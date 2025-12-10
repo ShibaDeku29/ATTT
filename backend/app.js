@@ -32,9 +32,8 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 4000;
 
-// Connect to Database (or use mock)
-// connectDB(); // Comment out for mock testing
-console.log('Using Mock Database for testing');
+// Connect to Database
+connectDB();
 
 // API Routes
 app.use('/api/auth', authRoutes);
