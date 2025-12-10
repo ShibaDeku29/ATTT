@@ -79,12 +79,16 @@ io.on('connection', (socket) => {
   // Send message
   socket.on('message:send', async (data) => {
     try {
-      const { roomId, text } = data;
+      const { roomId, text, imageUrl, audioUrl, fileUrl, fileType } = data;
       
       const message = await Message.create({
         sender: { _id: socket.data.userId, username: 'user' },
         room: roomId,
-        text: text.trim()
+        text: text.trim(),
+        imageUrl: imageUrl || undefined,
+        audioUrl: audioUrl || undefined,
+        fileUrl: fileUrl || undefined,
+        fileType: fileType || undefined,
       });
 
       console.log(`Message from ${socket.data.userId}: ${text} in room ${roomId}`);
@@ -92,6 +96,17 @@ io.on('connection', (socket) => {
     } catch (error) {
       console.error('Message error:', error);
       socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
+  // React to message
+  socket.on('message:react', async (data) => {
+    try {
+      const { messageId, emoji, roomId } = data;
+      console.log(`Reaction: ${emoji} on message ${messageId} in room ${roomId}`);
+      io.to(roomId).emit('message:react', { messageId, emoji, count: 1 });
+    } catch (error) {
+      console.error('Reaction error:', error);
     }
   });
 

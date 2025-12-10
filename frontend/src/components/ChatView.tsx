@@ -15,7 +15,6 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [messageText, setMessageText] = useState('');
   const [loading, setLoading] = useState(true);
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [reactions, setReactions] = useState<{ [key: string]: { [key: string]: number } }>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -73,6 +72,9 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   const initializeSocket = () => {
     const newSocket = io('http://localhost:4000', {
       reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
     });
 
     newSocket.on('connect', () => {
@@ -81,11 +83,15 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
       newSocket.emit('room:join', roomId);
     });
 
+    newSocket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
     newSocket.on('message:receive', (message: Message) => {
       setMessages((prev) => [...prev, message]);
     });
 
-    newSocket.on('message:reaction', (data: any) => {
+    newSocket.on('message:react', (data: any) => {
       setReactions((prev) => ({
         ...prev,
         [data.messageId]: {
@@ -96,14 +102,14 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
     });
 
     socketRef.current = newSocket;
-    setSocket(newSocket);
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim()) return;
+
     if (!socketRef.current || !socketRef.current.connected) {
-      alert('Kết nối mất. Vui lòng làm mới trang');
+      alert('Kết nối mất. Vui lòng thử lại');
       return;
     }
 
@@ -113,18 +119,26 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !socketRef.current || !socketRef.current.connected) {
-      alert('Kết nối mất. Vui lòng làm mới trang');
+    if (!file) return;
+    
+    if (!socketRef.current || !socketRef.current.connected) {
+      alert('Kết nối mất. Vui lòng thử lại');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
+    
     const reader = new FileReader();
     reader.onload = (event) => {
-      socketRef.current?.emit('message:send', {
-        roomId,
-        text: `📄 ${file.name}`,
-        fileUrl: event.target?.result,
-        fileType: file.type,
-      });
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('message:send', {
+          roomId,
+          text: `📄 ${file.name}`,
+          fileUrl: event.target?.result,
+          fileType: file.type,
+        });
+      } else {
+        alert('Kết nối mất trong quá trình tải. Vui lòng thử lại');
+      }
     };
     reader.readAsDataURL(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -132,17 +146,25 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !socketRef.current || !socketRef.current.connected) {
-      alert('Kết nối mất. Vui lòng làm mới trang');
+    if (!file) return;
+    
+    if (!socketRef.current || !socketRef.current.connected) {
+      alert('Kết nối mất. Vui lòng thử lại');
+      if (imageInputRef.current) imageInputRef.current.value = '';
       return;
     }
+    
     const reader = new FileReader();
     reader.onload = (event) => {
-      socketRef.current?.emit('message:send', {
-        roomId,
-        text: `🖼️ Ảnh`,
-        imageUrl: event.target?.result,
-      });
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.emit('message:send', {
+          roomId,
+          text: `🖼️ Ảnh`,
+          imageUrl: event.target?.result,
+        });
+      } else {
+        alert('Kết nối mất trong quá trình tải. Vui lòng thử lại');
+      }
     };
     reader.readAsDataURL(file);
     if (imageInputRef.current) imageInputRef.current.value = '';
@@ -189,8 +211,10 @@ export const ChatView = ({ roomId, onClose }: ChatViewProps) => {
   };
 
   const handleReaction = (messageId: string, emoji: string) => {
-    if (socket) {
-      socket.emit('message:react', { messageId, emoji, roomId });
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit('message:react', { messageId, emoji, roomId });
+    } else {
+      alert('Kết nối mất. Vui lòng làm mới trang');
     }
   };
 
