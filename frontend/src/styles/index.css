@@ -145,3 +145,13 @@ body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
 }
+
+/* Chat specific tweaks */
+.bg-dark-card { background-color: var(--bg-card); }
+.bg-dark-bg { background-color: var(--bg-secondary); }
+.message-bubble { box-shadow: 0 8px 18px rgba(2,6,23,0.12); }
+.chat-input:focus { outline: none; box-shadow: 0 6px 18px rgba(59,130,246,0.12); }
+
+@media (max-width: 768px) {
+  .max-w-5xl { max-width: 100%; padding: 0 12px; }
+}
